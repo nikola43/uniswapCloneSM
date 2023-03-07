@@ -23,7 +23,7 @@ async function main() {
     const contractFactory = await ethers.getContractFactory(contractName);
     SFYX = await contractFactory.deploy();
 
-    console.log(colors.cyan("SFY Address: ") + colors.yellow(SFYX.address));
+    console.log(colors.cyan("SFYX Address: ") + colors.yellow(SFYX.address));
     console.log(colors.cyan("Deployer SFYX balance : ") + colors.yellow(await SFYX.balanceOf(deployer.address)));
 
     await test_util.sleep("60");

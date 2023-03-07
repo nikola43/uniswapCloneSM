@@ -74,9 +74,13 @@ npx hardhat test test/TestZoeToken.test.ts --network localhost
 nodemon --watch test/TestZoeToken.test.ts --exec 'npx hardhat test test/TestZoeToken.test.ts --network localhost'
 
 -------------------------
-SFY Address: 0xA9A0639172541e073c7095d5b0CB31e1415E04c2
-SFY Address: 0x15BF7AEE644cB8866A46e88DDAe30e2ddEfC28eF
-UniswapV2Factory Address: 0xFb28D8501776222Af248A7dbA190faFF343a7E51
+SFY Address: 0x83b2161FA24E5105928dDAb37a368259C5cF9B9B
+SFYX Address: 0xB864e65109db4d65fB2d16607bff5b1bF86EF4b5
+UniswapV2Factory Address: 0x2f8405312afBc0204147596db9e7a3461dF37d5A
+INIT_CODE_PAIR_HASH: 0xde2ba8c4a4dcd2005125e8af2ba4f0c2b8992301284322c0cfe03180f14132b6
+UniswapV2Router02 Address: 0x946EAD146fF0b84A7193c3060C5380133243243F
+feeToSetter: 0xD4C9e948681b98cf2a0DFe80823A0109e457F8fD
+feeTo: 0x62fdf0c665C33FF642215639631C017F072153eB
 
 
 I think PulseX is a fork of pancakeswap, if you could double check that would be great.
