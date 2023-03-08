@@ -12,7 +12,9 @@ interface IUniswapV2Factory {
         uint
     );
 
-    function feeTo() external view returns (address);
+    function feeTo1() external view returns (address);
+
+    function feeTo2() external view returns (address);
 
     function feeToSetter() external view returns (address);
 
@@ -451,8 +453,8 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
         uint112 _reserve0,
         uint112 _reserve1
     ) private returns (bool feeOn) {
-        address feeTo = IUniswapV2Factory(factory).feeTo();
-        feeOn = feeTo != address(0);
+        address feeTo1 = IUniswapV2Factory(factory).feeTo1();
+        feeOn = feeTo1 != address(0);
         uint _kLast = kLast; // gas savings
         if (feeOn) {
             if (_kLast != 0) {
@@ -460,9 +462,22 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
                 uint rootKLast = Math.sqrt(_kLast);
                 if (rootK > rootKLast) {
                     uint numerator = totalSupply.mul(rootK.sub(rootKLast));
-                    uint denominator = rootK.mul(7).add(rootKLast);
+                    uint denominator = rootK.mul(7).add(rootKLast); // 0.07%
                     uint liquidity = numerator / denominator;
-                    if (liquidity > 0) _mint(feeTo, liquidity);
+                    if (liquidity > 0) {
+                        address feeTo2 = IUniswapV2Factory(factory).feeTo2();
+                        bool feeOn2 = feeTo2 != address(0);
+
+                        if (feeOn2) {
+                            uint256 feeTo2Amount = (liquidity * 1429) / 10000; // 0.01 %
+                            uint256 feeTo1Amount = liquidity - feeTo2Amount; // 0.06 %
+
+                            _mint(feeTo2, feeTo2Amount);
+                            _mint(feeTo1, feeTo1Amount);
+                        } else {
+                            _mint(feeTo1, liquidity);
+                        }
+                    }
                 }
             }
         } else if (_kLast != 0) {
@@ -616,7 +631,8 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
 }
 
 contract UniswapV2Factory is IUniswapV2Factory {
-    address public feeTo;
+    address public feeTo1;
+    address public feeTo2;
     address public feeToSetter;
 
     mapping(address => mapping(address => address)) public getPair;
@@ -665,9 +681,14 @@ contract UniswapV2Factory is IUniswapV2Factory {
         emit PairCreated(token0, token1, pair, allPairs.length);
     }
 
-    function setFeeTo(address _feeTo) external {
+    function setFeeTo(address _feeTo1) external {
         require(msg.sender == feeToSetter, "UniswapV2: FORBIDDEN");
-        feeTo = _feeTo;
+        feeTo1 = _feeTo1;
+    }
+
+    function setFeeTo2(address _feeTo2) external {
+        require(msg.sender == feeToSetter, "UniswapV2: FORBIDDEN");
+        feeTo2 = _feeTo2;
     }
 
     function setFeeToSetter(address _feeToSetter) external {
