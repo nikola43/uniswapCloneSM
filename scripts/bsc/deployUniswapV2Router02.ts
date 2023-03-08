@@ -7,7 +7,7 @@ const colors = require('colors/safe');
 async function main() {
 
     let uniswapV2Router02: Contract;
-    const factoryAddress = "0x2f8405312afBc0204147596db9e7a3461dF37d5A"
+    const factoryAddress = "0xaEE7abd6Fc2cD5E419Dae5E8C120077d5c19d3CC"
     const WETH = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
 
     const [deployer] = await ethers.getSigners();
