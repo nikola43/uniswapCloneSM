@@ -74,15 +74,22 @@ npx hardhat test test/TestZoeToken.test.ts --network localhost
 nodemon --watch test/TestZoeToken.test.ts --exec 'npx hardhat test test/TestZoeToken.test.ts --network localhost'
 
 -------------------------
-SFY Address: 0x83b2161FA24E5105928dDAb37a368259C5cF9B9B
-SFYX Address: 0xB864e65109db4d65fB2d16607bff5b1bF86EF4b5
-UniswapV2Factory Address: 0xaEE7abd6Fc2cD5E419Dae5E8C120077d5c19d3CC
-INIT_CODE_PAIR_HASH: 0xde2ba8c4a4dcd2005125e8af2ba4f0c2b8992301284322c0cfe03180f14132b6
-UniswapV2Router02 Address: 0x6E829A934cD5b734203d5ec3c9823Ff8c6761D90
-feeToSetter: 0xD4C9e948681b98cf2a0DFe80823A0109e457F8fD
-feeTo: 0x62fdf0c665C33FF642215639631C017F072153eB
+SFY Address: 0xefc5bAE08de485DA4D4425B2Ad4adf44FF2F3844
+SFYX Address: 0x4a364546B6765a3469ab131b96ddEbe4A2199082
+UniswapV2Router02 Address: 0x6fe42022A36D54F275De6753A025978d8Ec20625
+UniswapV2Factory Address: 0x348ED784BB223F49DF3C7bC7EAC7139095dfF08e
+INIT_CODE_PAIR_HASH: 0xb905cc95365a48260c9c7b67c7268f693f07520257ebfb5fa32bc986f4f4fa84
+
+feeToSetter: 0x0a40F96d0a9C78dA57f4Dba1c7eCFf747D0e0565
+feeTo1: 0x5e8a2A6c9443Fe2460C1eec1Ecb73C90196D7DFc
+feeTo2: 0x9aA2C6b1a94C96e070f24D7b36b104F6a2779100
+
+SFY  / ETH = 0x38fE5F2caF0176DEF63480540c8063d1D3586dBd
+SFYX / ETH = 0x70b73AC3C37ffAAdD173eFBDfddd0b1E8FA7829B
+SFY  / SFYX = 0xCF029830b9fFf03Af6E833C216678CEc883A51e7
+
 MasterChef Address: 0x6e41565807d92A19d02A4e60A69efc049eE4f0CA
-    const WETH = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
+WETH = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
 
 I think PulseX is a fork of pancakeswap, if you could double check that would be great.
 
@@ -129,3 +136,12 @@ Burns:
 I think pancake saves all the tokens to be burned on a certain wallet that will burn it after X-days/weeks.
 Pancake makes burns weekly, we could do the same. Please check how PCS solves this, and we will go with a similar / same solution to work faster.
 All burns should go to dead address.
+
+
+
+
+npx hardhat run scripts/bsc/deploySFY.ts --network goerli
+npx hardhat run scripts/bsc/deploySFYX.ts --network goerli
+npx hardhat run scripts/bsc/deployUniswapV2Factory.ts --network goerli
+npx hardhat run scripts/bsc/deployUniswapV2Router02.ts --network goerli
+

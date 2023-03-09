@@ -7,7 +7,7 @@ const colors = require('colors/safe');
 async function main() {
 
     let uniswapV2Router02: Contract;
-    const factoryAddress = "0xaEE7abd6Fc2cD5E419Dae5E8C120077d5c19d3CC"
+    const factoryAddress = "0x348ED784BB223F49DF3C7bC7EAC7139095dfF08e"
     const WETH = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
 
     const [deployer] = await ethers.getSigners();
@@ -27,7 +27,7 @@ async function main() {
 
     console.log(colors.cyan("UniswapV2Router02 Address: ") + colors.yellow(uniswapV2Router02.address));
 
-    await test_util.sleep("60");
+    await test_util.sleep("120");
     //await test_util.updateABI(contractName)
     await test_util.verify(uniswapV2Router02.address, contractName, [factoryAddress, WETH])
 

@@ -19,8 +19,8 @@ async function main() {
     );
     console.log();
 
-    const SFYX = "0xB864e65109db4d65fB2d16607bff5b1bF86EF4b5"
-    const SFYXPerBlock = 40;
+    const SFYX = "0x4a364546B6765a3469ab131b96ddEbe4A2199082"
+    const SFYXPerBlock = 40000000000000000000; // 40 tokens
 
     let contractName = "MasterChef"
     const contractFactory = await ethers.getContractFactory(contractName);
@@ -28,7 +28,7 @@ async function main() {
 
     console.log(colors.cyan("MasterChef Address: ") + colors.yellow(MasterChef.address));
 
-    await test_util.sleep("60");
+    await test_util.sleep("120");
     //await test_util.updateABI(contractName)
     await test_util.verify(MasterChef.address, contractName, [SFYX, SFYXPerBlock])
 

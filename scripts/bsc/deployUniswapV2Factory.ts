@@ -28,7 +28,7 @@ async function main() {
 
     console.log(colors.cyan("UniswapV2Factory Address: ") + colors.yellow(uniswapV2Factory.address));
 
-    await test_util.sleep("60");
+    await test_util.sleep("120");
     //await test_util.updateABI(contractName)
     await test_util.verify(uniswapV2Factory.address, contractName, [_feeToSetter])
     console.log(colors.cyan("INIT_CODE_PAIR_HASH: ") + colors.yellow(await uniswapV2Factory.INIT_CODE_PAIR_HASH()));
