@@ -1,0 +1,127 @@
+pragma solidity ^0.8.0;
+
+import "@gelatonetwork/core/contracts/Gelato.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+
+contract BuyLimitOrder {
+    address public owner;
+    address public constant GELATO = 0x1b97842F6E7Fb6A5658a5e1a5E5e9621b6e1e6D2;
+    address public constant UNISWAP_ROUTER =
+        0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+
+    IUniswapV2Router02 public uniswapRouter;
+    Gelato public gelato;
+
+    constructor() {
+        owner = msg.sender;
+        uniswapRouter = IUniswapV2Router02(UNISWAP_ROUTER);
+        gelato = Gelato(GELATO);
+    }
+
+    modifier onlyOwner() {
+        require(
+            msg.sender == owner,
+            "Only the contract owner can call this function"
+        );
+        _;
+    }
+
+    function setBuyLimitOrder(
+        address _tokenA,
+        address _tokenB,
+        uint256 _amountIn,
+        uint256 _amountOutMin,
+        uint256 _priceLimit,
+        uint256 _deadline
+    ) external onlyOwner {
+        // Set up the condition: tokenA/tokenB price <= priceLimit
+        Gelato.Condition memory priceCondition = Gelato.Condition({
+            inst: address(this),
+            data: abi.encode(_tokenA, _tokenB, _priceLimit)
+        });
+
+        // Set up the action: call Uniswap's swapExactTokensForTokens function
+        Gelato.Action memory swapAction = Gelato.Action({
+            addr: address(uniswapRouter),
+            data: abi.encodeWithSelector(
+                uniswapRouter.swapExactTokensForTokens.selector,
+                _amountIn,
+                _amountOutMin,
+                getPath(_tokenA, _tokenB),
+                address(this),
+                _deadline
+            ),
+            operation: Gelato.Operation.Call,
+            value: 0
+        });
+
+        // Set up the Gelato task
+        Gelato.Task memory task = Gelato.Task({
+            conditions: new Gelato.Condition[](1),
+            actions: new Gelato.Action[](1),
+            selfProviderGasLimit: 0,
+            selfProviderGasPriceCeil: 0
+        });
+
+        task.conditions[0] = priceCondition;
+        task.actions[0] = swapAction;
+
+        // Submit the task to Gelato
+        gelato.submitTask(task);
+    }
+
+    function checkPriceCondition(
+        address _tokenA,
+        address _tokenB,
+        uint256 _priceLimit
+    ) external view returns (bool) {
+        uint256 price = getPrice(_tokenA, _tokenB);
+        return price <= _priceLimit;
+    }
+
+    function getPrice(
+        address _tokenA,
+        address _tokenB
+    ) public view returns (uint256) {
+        // Fetch the current price from Uniswap
+        // (Assuming _tokenA and _tokenB are ERC20 tokens)
+        uint[] memory amounts = uniswapRouter.getAmountsOut(
+            10 ** 18,
+            getPath(_tokenA, _tokenB)
+        );
+        return amounts[1];
+    }
+
+    function getPath(
+        address _tokenA,
+        address _tokenB
+    ) private pure returns (address[] memory) {
+        address[] memory path = new address[](2);
+        path[0] = _tokenA;
+        path[1] = _tokenB;
+        return path;
+    }
+
+    // Fallback function to receive tokens
+    receive() external payable {}
+
+    // Withdraw function to retrieve tokens in case the limit order is canceled or not executed
+    function withdrawTokens(address _token) external onlyOwner {
+        IERC20 token = IERC20(_token);
+        uint256 balance = token.balanceOf(address(this));
+        require(balance > 0, "No tokens to withdraw");
+        token.transfer(owner, balance);
+    }
+
+    // Withdraw function to retrieve ETH in case the limit order is canceled or not executed
+    function withdrawETH() external onlyOwner {
+        uint256 balance = address(this).balance;
+        require(balance > 0, "No ETH to withdraw");
+        payable(owner).transfer(balance);
+    }
+
+    // Cancel the limit order
+    function cancelBuyLimitOrder(Gelato.Task memory _task) external onlyOwner {
+        gelato.cancelTask(_task);
+    }
+}

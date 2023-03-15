@@ -64,8 +64,8 @@ npx hardhat verify --libraries tokenLibs.js 0xeEEC44E393465eE74Eb0Bfe2e5C6FC6Da5
 
 ```
 
-npx hardhat node --fork https://rpc.ankr.com/bsc
-npx hardhat test test/TestUpgradeKronus.test.ts --network localhost
+npx hardhat node --fork https://rpc.ankr.com/eth_goerli
+npx hardhat test test/BuyBurn.test.ts --network localhost
 
 # TEST ZOE
 npx hardhat node --fork https://rpc.ankr.com/eth --fork-block-number 15687262
@@ -87,9 +87,13 @@ feeTo2: 0x9aA2C6b1a94C96e070f24D7b36b104F6a2779100
 SFY  / ETH = 0x38fE5F2caF0176DEF63480540c8063d1D3586dBd
 SFYX / ETH = 0x70b73AC3C37ffAAdD173eFBDfddd0b1E8FA7829B
 SFY  / SFYX = 0xCF029830b9fFf03Af6E833C216678CEc883A51e7
-
-MasterChef Address: 0x6e41565807d92A19d02A4e60A69efc049eE4f0CA
 WETH = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
+
+MasterChefV2 = 0x5Fe1C14b7C07E448127D4815e588A946c4C42Be2
+CakePool: 0xf801bB69847e42a082F523d0D852C56909EA4898
+
+PLSXBuyAndBurnV3 Address: 0x65D546E4D6C9325B7b3516b2afa2F0bCA9986fc8
+MasterChef Address: 0x6e41565807d92A19d02A4e60A69efc049eE4f0CA
 
 I think PulseX is a fork of pancakeswap, if you could double check that would be great.
 
