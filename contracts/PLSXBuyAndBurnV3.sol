@@ -1278,9 +1278,7 @@ interface IUniswapV2Pair02 {
         address senderOrigin
     ) external returns (uint liquidity);
 
-    function burn(
-        address to
-    ) external returns (uint amount0, uint amount1);
+    function burn(address to) external returns (uint amount0, uint amount1);
 
     function swap(
         uint amount0Out,
@@ -1346,13 +1344,17 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
 
     IUniswapV2Factory public immutable factory;
 
-    ERC20Burnable public PLSX;
-    address private immutable WPLS;
+    ERC20Burnable public SFYX;
+    ERC20Burnable public SFY;
+    address private immutable WETH;
     uint public devCut; // in basis points aka parts per 10,000 so 5000 is 50%, cap of 50%, default is 0
-    uint public constant BOUNTY_FEE = 10;
+    uint public BOUNTY_FEE = 10;
+    uint256 constant TAX_DIVISOR = 10000;
+    uint public SFYBuyBurnPercentage = 8571;
+    uint public SFYXBuyBurnPercentage = 1429;
     address public devAddr;
     uint public slippage = 9;
-    uint public burnedPLSX = 0;
+    uint public burnedSFYX = 0;
 
     // set of addresses that can perform certain functions
     mapping(address => bool) public isAuth;
@@ -1360,14 +1362,14 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
     bool public anyAuth = false;
 
     modifier onlyAuth() {
-        require(isAuth[_msgSender()], "PLSXBuyAndBurn: FORBIDDEN");
+        require(isAuth[_msgSender()], "SFYXBuyAndBurn: FORBIDDEN");
         _;
     }
 
     // C6: It"s not a fool proof solution, but it prevents flash loans, so here it"s ok to use tx.origin
     modifier onlyEOA() {
         // Try to make flash-loan exploit harder to do by only allowing externally owned addresses.
-        require(msg.sender == tx.origin, "PLSXBuyAndBurn: must use EOA");
+        require(msg.sender == tx.origin, "SFYXBuyAndBurn: must use EOA");
         _;
     }
 
@@ -1389,10 +1391,16 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
     event LogToggleOverrode(address _adr);
     event LogSlippageOverrode(address _adr);
 
-    constructor(address _factory, ERC20Burnable _PLSX, address _WPLS) public {
+    constructor(
+        address _factory,
+        ERC20Burnable _SFY,
+        ERC20Burnable _SFYX,
+        address _WETH
+    ) public {
         factory = IUniswapV2Factory(_factory);
-        PLSX = _PLSX;
-        WPLS = _WPLS;
+        SFY = _SFY;
+        SFYX = _SFYX;
+        WETH = _WETH;
         devAddr = msg.sender;
         isAuth[msg.sender] = true;
         authorized.push(msg.sender);
@@ -1412,6 +1420,18 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
     function setAnyAuth() external onlyOwner {
         anyAuth = true;
         emit LogSetAnyAuth();
+    }
+
+    function setBuyBurnPercentages(
+        uint _SFYBuyBurnPercentage,
+        uint _SFYXBuyBurnPercentage
+    ) external onlyOwner {
+        require(
+            _SFYBuyBurnPercentage + _SFYXBuyBurnPercentage <= TAX_DIVISOR,
+            "BuyBurn percentage must be lower than or equal to 100%"
+        );
+        SFYBuyBurnPercentage = _SFYBuyBurnPercentage;
+        SFYXBuyBurnPercentage = _SFYXBuyBurnPercentage;
     }
 
     function setDevCut(uint _amount) external onlyOwner {
@@ -1440,7 +1460,7 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
     function bridgeFor(address token) public view returns (address bridge) {
         bridge = _bridges[token];
         if (bridge == address(0)) {
-            bridge = WPLS;
+            bridge = WETH;
         }
     }
 
@@ -1459,8 +1479,8 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
     function setBridge(address token, address bridge) external onlyAuth {
         // Checks
         require(
-            token != address(PLSX) && token != WPLS && token != bridge,
-            "PLSXBuyAndBurn: Invalid bridge"
+            token != address(SFYX) && token != WETH && token != bridge,
+            "SFYXBuyAndBurn: Invalid bridge"
         );
 
         // Effects
@@ -1472,7 +1492,7 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
         address[] calldata token0,
         address[] calldata token1
     ) external onlyEOA nonReentrant {
-        require(anyAuth || isAuth[_msgSender()], "PLSXBuyAndBurn: FORBIDDEN");
+        require(anyAuth || isAuth[_msgSender()], "SFYXBuyAndBurn: FORBIDDEN");
         uint len = token0.length;
         uint i;
         for (i = 0; i < len; i++) {
@@ -1484,7 +1504,7 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
             );
             require(
                 address(pair) != address(0),
-                "PLSXBuyAndBurn: Invalid pair"
+                "SFYXBuyAndBurn: Invalid pair"
             );
 
             IERC20(address(pair)).safeTransfer(
@@ -1494,7 +1514,7 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
             pair.burn(address(this));
         }
 
-        converted[WPLS] = block.number; // WPLS is done last
+        converted[WETH] = block.number; // WETH is done last
         for (i = 0; i < len; i++) {
             if (block.number > converted[token0[i]]) {
                 _convertStep(
@@ -1511,23 +1531,29 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
                 converted[token1[i]] = block.number;
             }
         }
-        // final step is to swap all WPLS to PLSX and burn it
-        uint wplsBal = IERC20(WPLS).balanceOf(address(this));
-        if (wplsBal > 0) {
-            _toPLSX(WPLS, wplsBal);
+        // final step is to swap all WETH to SFYX and burn it
+        uint wethBal = IERC20(WETH).balanceOf(address(this));
+        if (wethBal > 0) {
+            uint256 SFYAmount = (wethBal * SFYBuyBurnPercentage) / TAX_DIVISOR;
+            uint256 SFYXAmount = (wethBal * SFYXBuyBurnPercentage) /
+                TAX_DIVISOR;
+
+            _swapFromTo(WETH, address(SFY), SFYAmount);
+            _swapFromTo(WETH, address(SFYX), SFYXAmount);
         }
-        _burnPLSX();
+        _burnTokens(address(SFY));
+        _burnTokens(address(SFYX));
     }
 
     function convertLps(address[] calldata lp) external onlyEOA nonReentrant {
-        require(anyAuth || isAuth[_msgSender()], "PLSXBuyAndBurn: FORBIDDEN");
+        require(anyAuth || isAuth[_msgSender()], "SFYXBuyAndBurn: FORBIDDEN");
         uint len = lp.length;
         uint i;
         for (i = 0; i < len; i++) {
             IUniswapV2Pair02 pair = IUniswapV2Pair02(lp[i]);
             require(
                 address(pair) != address(0),
-                "PLSXBuyAndBurn: Invalid pair"
+                "SFYXBuyAndBurn: Invalid pair"
             );
             uint bal = pair.balanceOf(address(this));
             if (bal > 0) {
@@ -1536,7 +1562,7 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
             }
         }
 
-        converted[WPLS] = block.number; // WPLS is done last
+        converted[WETH] = block.number; // WETH is done last
         for (i = 0; i < len; i++) {
             IUniswapV2Pair02 pair = IUniswapV2Pair02(lp[i]);
             address token0 = pair.token0();
@@ -1550,12 +1576,18 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
                 converted[token1] = block.number;
             }
         }
-        // final step is to swap all WPLS to PLSX and burn it
-        uint wplsBal = IERC20(WPLS).balanceOf(address(this));
-        if (wplsBal > 0) {
-            _toPLSX(WPLS, wplsBal);
+        // final step is to swap all WETH to SFYX and burn it
+        uint wethBal = IERC20(WETH).balanceOf(address(this));
+        if (wethBal > 0) {
+            uint256 SFYAmount = (wethBal * SFYBuyBurnPercentage) / TAX_DIVISOR;
+            uint256 SFYXAmount = (wethBal * SFYXBuyBurnPercentage) /
+                TAX_DIVISOR;
+
+            _swapFromTo(WETH, address(SFY), SFYAmount);
+            _swapFromTo(WETH, address(SFYX), SFYXAmount);
         }
-        _burnPLSX();
+        _burnTokens(address(SFY));
+        _burnTokens(address(SFYX));
     }
 
     // internal functions
@@ -1566,7 +1598,7 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
     ) internal returns (bool) {
         // Interactions
         uint256 amount = amount0;
-        if (token0 == address(PLSX) || token0 == WPLS) {
+        if (token0 == address(SFYX) || token0 == WETH) {
             return true;
         } else {
             address bridge = bridgeFor(token0);
@@ -1576,15 +1608,16 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
         return true;
     }
 
-    function _burnPLSX() internal returns (uint amount) {
-        uint _amt = IERC20(address(PLSX)).balanceOf(address(this));
-        uint bounty = _amt.mul(BOUNTY_FEE).div(10000);
+    function _burnTokens(address token) internal returns (uint amount) {
+        uint _amt = IERC20(token).balanceOf(address(this));
+        uint bounty = _amt.mul(BOUNTY_FEE).div(TAX_DIVISOR);
         amount = _amt.sub(bounty);
-        //PLSX.burn(amount);
-        PLSX.transfer(address(0xdead), amount);
-        burnedPLSX += amount;
-        IERC20(address(PLSX)).safeTransfer(_msgSender(), bounty); // send message sender their share of 0.1%
-        emit LogBurn(_msgSender(), address(PLSX), bounty, amount);
+        //SFYX.burn(amount);
+        //SFYX.transfer(address(0xdead), amount);
+        IERC20(token).safeTransfer(address(0xdead), amount);
+        burnedSFYX += amount;
+        IERC20(token).safeTransfer(_msgSender(), bounty); // send message sender their share of 0.1%
+        emit LogBurn(_msgSender(), token, bounty, amount);
     }
 
     function _swap(
@@ -1596,7 +1629,7 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
         IUniswapV2Pair02 pair = IUniswapV2Pair02(
             factory.getPair(fromToken, toToken)
         );
-        require(address(pair) != address(0), "PLSXBuyAndBurn: Cannot convert");
+        require(address(pair) != address(0), "SFYXBuyAndBurn: Cannot convert");
 
         (uint256 reserve0, uint256 reserve1, ) = pair.getReserves();
         (uint reserveInput, uint reserveOutput) = fromToken == pair.token0()
@@ -1610,7 +1643,7 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
         require(
             slippageOverrode[fromToken] ||
                 reserveInput.div(amountInput) > slippage,
-            "PLSXBuyAndBurn: slippage too high"
+            "SFYXBuyAndBurn: slippage too high"
         );
 
         amountOut = _getAmountOut(amountInput, reserveInput, reserveOutput);
@@ -1620,17 +1653,18 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
         pair.swap(amount0Out, amount1Out, to, new bytes(0));
     }
 
-    function _toPLSX(
-        address token,
+    function _swapFromTo(
+        address fromToken,
+        address toToken,
         uint256 amountIn
     ) internal returns (uint256 amountOut) {
         uint256 amount = amountIn;
         if (devCut > 0) {
-            amount = amount.mul(devCut).div(10000);
-            IERC20(token).safeTransfer(devAddr, amount);
+            amount = amount.mul(devCut).div(TAX_DIVISOR);
+            IERC20(fromToken).safeTransfer(devAddr, amount);
             amount = amountIn.sub(amount);
         }
-        amountOut = _swap(token, address(PLSX), amount, address(this));
+        amountOut = _swap(fromToken, toToken, amount, address(this));
     }
 
     function _getAmountOut(
@@ -1638,14 +1672,14 @@ contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
         uint reserveIn,
         uint reserveOut
     ) internal pure returns (uint amountOut) {
-        require(amountIn > 0, "PLSXBuyAndBurn: INSUFFICIENT_INPUT_AMOUNT");
+        require(amountIn > 0, "SFYXBuyAndBurn: INSUFFICIENT_INPUT_AMOUNT");
         require(
             reserveIn > 0 && reserveOut > 0,
-            "PLSXBuyAndBurn: INSUFFICIENT_LIQUIDITY"
+            "SFYXBuyAndBurn: INSUFFICIENT_LIQUIDITY"
         );
         uint amountInWithFee = amountIn.mul(9971);
         uint numerator = amountInWithFee.mul(reserveOut);
-        uint denominator = reserveIn.mul(10000).add(amountInWithFee);
+        uint denominator = reserveIn.mul(TAX_DIVISOR).add(amountInWithFee);
         amountOut = numerator / denominator;
     }
 }

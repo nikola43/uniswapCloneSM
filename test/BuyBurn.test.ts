@@ -23,6 +23,7 @@ describe("Token contract", async () => {
     const SFYX_ETHAddress = "0x70b73AC3C37ffAAdD173eFBDfddd0b1E8FA7829B";
     const SFY_SFYXAddress = "0xCF029830b9fFf03Af6E833C216678CEc883A51e7";
     const SFYXAddress = "0x4a364546B6765a3469ab131b96ddEbe4A2199082"
+    const SFYAddress = "0xefc5bAE08de485DA4D4425B2Ad4adf44FF2F3844"
 
 
 
@@ -51,7 +52,7 @@ describe("Token contract", async () => {
 
         let contractName = "PLSXBuyAndBurnV3"
         const contractFactory = await ethers.getContractFactory(contractName);
-        PLSXBuyAndBurnV3 = await contractFactory.deploy(factoryAddress, WETH, SFYXAddress);
+        PLSXBuyAndBurnV3 = await contractFactory.deploy(factoryAddress, SFYAddress, SFYXAddress, WETH);
 
         console.log(colors.cyan("PLSXBuyAndBurnV3 Address: ") + colors.yellow(PLSXBuyAndBurnV3.address));
 

@@ -9,10 +9,8 @@ async function main() {
     let PLSXBuyAndBurnV3: Contract;
     const WETH = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
     const factoryAddress = "0x348ED784BB223F49DF3C7bC7EAC7139095dfF08e"
-    const SFY_ETHAddress = "0x38fE5F2caF0176DEF63480540c8063d1D3586dBd";
-    const SFYX_ETHAddress = "0x70b73AC3C37ffAAdD173eFBDfddd0b1E8FA7829B";
-    const SFY_SFYXAddress = "0xCF029830b9fFf03Af6E833C216678CEc883A51e7";
     const SFYXAddress = "0x4a364546B6765a3469ab131b96ddEbe4A2199082"
+    const SFYAddress = "0xefc5bAE08de485DA4D4425B2Ad4adf44FF2F3844"
 
     const [deployer] = await ethers.getSigners();
     if (deployer === undefined) throw new Error("Deployer is undefined.");
@@ -27,13 +25,15 @@ async function main() {
 
     let contractName = "PLSXBuyAndBurnV3"
     const contractFactory = await ethers.getContractFactory(contractName);
-    PLSXBuyAndBurnV3 = await contractFactory.deploy(factoryAddress, SFYXAddress, WETH);
+    PLSXBuyAndBurnV3 = await contractFactory.deploy(factoryAddress, SFYAddress, SFYXAddress, WETH);
 
     console.log(colors.cyan("PLSXBuyAndBurnV3 Address: ") + colors.yellow(PLSXBuyAndBurnV3.address));
 
-    await test_util.sleep("60");
+    await test_util.sleep("360");
     //await test_util.updateABI(contractName)
-    await test_util.verify(PLSXBuyAndBurnV3.address, contractName, [factoryAddress, SFYXAddress, WETH])
+    await test_util.verify(PLSXBuyAndBurnV3.address, contractName, [factoryAddress, SFYAddress, SFYXAddress, WETH])
+    await test_util.sleep("5");
+    await PLSXBuyAndBurnV3.setAnyAuth();
 
     return true;
 }
