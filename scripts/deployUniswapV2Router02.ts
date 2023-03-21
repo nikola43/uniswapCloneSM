@@ -1,12 +1,14 @@
 
 import { ethers } from 'hardhat'
 import { formatEther } from 'ethers/lib/utils';
-import test_util from '../util'
+import test_util from './util'
 import { Contract } from 'ethers';
 const colors = require('colors/safe');
 async function main() {
 
-    let SFYX: Contract;
+    let uniswapV2Router02: Contract;
+    const factoryAddress = "0x348ED784BB223F49DF3C7bC7EAC7139095dfF08e"
+    const WETH = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
 
     const [deployer] = await ethers.getSigners();
     if (deployer === undefined) throw new Error("Deployer is undefined.");
@@ -19,16 +21,16 @@ async function main() {
     );
     console.log();
 
-    let contractName = "SFYX"
+    let contractName = "UniswapV2Router02"
     const contractFactory = await ethers.getContractFactory(contractName);
-    SFYX = await contractFactory.deploy();
+    uniswapV2Router02 = await contractFactory.deploy(factoryAddress, WETH);
 
-    console.log(colors.cyan("SFYX Address: ") + colors.yellow(SFYX.address));
-    console.log(colors.cyan("Deployer SFYX balance : ") + colors.yellow(await SFYX.balanceOf(deployer.address)));
+    console.log(colors.cyan("UniswapV2Router02 Address: ") + colors.yellow(uniswapV2Router02.address));
 
-    await test_util.sleep("60");
+    await test_util.sleep("120");
     //await test_util.updateABI(contractName)
-    await test_util.verify(SFYX.address, contractName)
+    await test_util.verify(uniswapV2Router02.address, contractName, [factoryAddress, WETH])
+
 
     return true;
 }

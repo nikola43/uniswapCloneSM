@@ -1,12 +1,13 @@
 
 import { ethers } from 'hardhat'
 import { formatEther } from 'ethers/lib/utils';
-import test_util from '../util'
+import test_util from './util'
 import { Contract } from 'ethers';
 const colors = require('colors/safe');
 async function main() {
 
-    let MasterChef: Contract;
+    let uniswapV2Factory: Contract;
+
 
     const [deployer] = await ethers.getSigners();
     if (deployer === undefined) throw new Error("Deployer is undefined.");
@@ -19,18 +20,19 @@ async function main() {
     );
     console.log();
 
-    const SFYX = "0x4a364546B6765a3469ab131b96ddEbe4A2199082"
-    const SFYXPerBlock = 40000000000000000000; // 40 tokens
+    const _feeToSetter = deployer.address;
 
-    let contractName = "MasterChef"
+    let contractName = "UniswapV2Factory"
     const contractFactory = await ethers.getContractFactory(contractName);
-    MasterChef = await contractFactory.deploy(SFYX, SFYXPerBlock);
+    uniswapV2Factory = await contractFactory.deploy(_feeToSetter);
 
-    console.log(colors.cyan("MasterChef Address: ") + colors.yellow(MasterChef.address));
+    console.log(colors.cyan("UniswapV2Factory Address: ") + colors.yellow(uniswapV2Factory.address));
 
     await test_util.sleep("120");
     //await test_util.updateABI(contractName)
-    await test_util.verify(MasterChef.address, contractName, [SFYX, SFYXPerBlock])
+    await test_util.verify(uniswapV2Factory.address, contractName, [_feeToSetter])
+    console.log(colors.cyan("INIT_CODE_PAIR_HASH: ") + colors.yellow(await uniswapV2Factory.INIT_CODE_PAIR_HASH()));
+
 
     return true;
 }

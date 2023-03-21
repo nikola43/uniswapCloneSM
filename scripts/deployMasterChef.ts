@@ -1,12 +1,12 @@
 
 import { ethers } from 'hardhat'
 import { formatEther } from 'ethers/lib/utils';
-import test_util from '../util'
+import test_util from './util'
 import { Contract } from 'ethers';
 const colors = require('colors/safe');
 async function main() {
 
-    let SFY: Contract;
+    let MasterChef: Contract;
 
     const [deployer] = await ethers.getSigners();
     if (deployer === undefined) throw new Error("Deployer is undefined.");
@@ -19,16 +19,18 @@ async function main() {
     );
     console.log();
 
-    let contractName = "SFY"
+    const SFYX = "0x4a364546B6765a3469ab131b96ddEbe4A2199082"
+    const SFYXPerBlock = 40000000000000000000; // 40 tokens
+
+    let contractName = "MasterChef"
     const contractFactory = await ethers.getContractFactory(contractName);
-    SFY = await contractFactory.deploy();
+    MasterChef = await contractFactory.deploy(SFYX, SFYXPerBlock);
 
-    console.log(colors.cyan("SFY Address: ") + colors.yellow(SFY.address));
-    console.log(colors.cyan("Deployer SFY balance : ") + colors.yellow(await SFY.balanceOf(deployer.address)));
+    console.log(colors.cyan("MasterChef Address: ") + colors.yellow(MasterChef.address));
 
-    await test_util.sleep("60");
+    await test_util.sleep("120");
     //await test_util.updateABI(contractName)
-    await test_util.verify(SFY.address, contractName)
+    await test_util.verify(MasterChef.address, contractName, [SFYX, SFYXPerBlock])
 
     return true;
 }

@@ -149,3 +149,71 @@ npx hardhat run scripts/bsc/deploySFYX.ts --network goerli
 npx hardhat run scripts/bsc/deployUniswapV2Factory.ts --network goerli
 npx hardhat run scripts/bsc/deployUniswapV2Router02.ts --network goerli
 
+
+
+
+HDRN - 25,298 holders
+https://etherscan.io/token/0x3819f64f282bf135d62168C1e513280dAF905e06
+
+TEXAN - 22,381 holders
+https://etherscan.io/token/0xcFCFfE432A48dB53F59c301422d2EdD77B2A88d7
+
+ICOSA - 4,604 holders
+https://etherscan.io/token/0xfc4913214444aF5c715cc9F7b52655e788A569ed
+
+MAXI - 5,336 holders
+https://etherscan.io/token/0x0d86EB9f43C57f6FF3BC9E23D8F9d82503f0e84b
+
+TEAM - 858 holders
+https://etherscan.io/token/0xB7c9E99Da8A857cE576A830A9c19312114d9dE02
+
+DECI - 2,284 holders
+https://etherscan.io/token/0x6b32022693210cD2Cfc466b9Ac0085DE8fC34eA6
+
+LUCKY - 1,135 holders
+https://etherscan.io/token/0x6B0956258fF7bd7645aa35369B55B61b8e6d6140
+
+TRIO - 1,079 holders
+https://etherscan.io/token/0xF55cD1e399e1cc3D95303048897a680be3313308
+
+POLY - 1,967 holders
+https://etherscan.io/token/0x9d93692E826A4bd9e903e2A27D7FbD1e116efdad
+
+BASE - 944 holders
+https://etherscan.io/token/0xe9f84d418B008888A992Ff8c6D22389C2C3504e0
+
+PLSD - 12,465 holders
+https://etherscan.io/token/0x34F0915a5f15a66Eba86F6a58bE1A471FB7836A7
+
+PLSB - 5,757 holder
+https://etherscan.io/token/0x5EE84583f67D5EcEa5420dBb42b462896E7f8D06
+
+ASIC - 2,300 holders
+https://etherscan.io/token/0x347a96a5BD06D2E15199b032F46fB724d6c73047
+
+PP - 7,372 holders
+https://etherscan.io/token/0x9565c2036963697786705120Fc59310F747bCfD0
+
+IM - 3,072 holders
+https://etherscan.io/token/0x0A58153a0CD1cfaea94cE1f7FdC5D7E679eCa936
+
+MORE - 2066 holders
+https://etherscan.io/token/0xbEEf3bB9dA340EbdF0f5bae2E85368140d7D85D0
+
+PLD - 394 holders
+https://etherscan.io/token/0x52Ada28F70BC8EBe5dd4381120d3CD76863919A8
+
+PZEN - 2,397 holders
+https://etherscan.io/token/0x5a24D7129B6f3FcAd2220296df28911880AD22B0
+
+COM - 3,067 holders
+https://etherscan.io/token/0x5A9780Bfe63f3ec57f01b087cD65BD656C9034A8
+
+DBI - 3,478 holders
+https://etherscan.io/token/0x2de509bf0014ddf697b220be628213034d320ece
+
+XEN - 74,136 holders
+https://etherscan.io/token/0x06450dEe7FD2Fb8E39061434BAbCFC05599a6Fb8
+
+HEX - 323,757 holders
+https://etherscan.io/token/0x2b591e99afE9f32eAA6214f7B7629768c40Eeb39

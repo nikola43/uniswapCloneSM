@@ -1,12 +1,16 @@
 
 import { ethers } from 'hardhat'
 import { formatEther } from 'ethers/lib/utils';
-import test_util from '../util'
+import test_util from './util'
 import { Contract } from 'ethers';
 const colors = require('colors/safe');
 async function main() {
 
-    let CakePool: Contract;
+    let PLSXBuyAndBurnV3: Contract;
+    const WETH = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
+    const factoryAddress = "0x348ED784BB223F49DF3C7bC7EAC7139095dfF08e"
+    const SFYXAddress = "0x4a364546B6765a3469ab131b96ddEbe4A2199082"
+    const SFYAddress = "0xefc5bAE08de485DA4D4425B2Ad4adf44FF2F3844"
 
     const [deployer] = await ethers.getSigners();
     if (deployer === undefined) throw new Error("Deployer is undefined.");
@@ -19,22 +23,17 @@ async function main() {
     );
     console.log();
 
-    const SFYX = "0x4a364546B6765a3469ab131b96ddEbe4A2199082"
-    const MasterChefV2 = "0x5Fe1C14b7C07E448127D4815e588A946c4C42Be2"
-    const _burnAdmin = deployer.address;
-    const _treasury = "0x334e0B1c6031EB348DDfABd60C45b5ff8Cb8f6b9";
-    const _operator = "0x334e0B1c6031EB348DDfABd60C45b5ff8Cb8f6b9";
-    const _pid = 0;
-
-    let contractName = "CakePool"
+    let contractName = "PLSXBuyAndBurnV3"
     const contractFactory = await ethers.getContractFactory(contractName);
-    CakePool = await contractFactory.deploy(SFYX, MasterChefV2, _burnAdmin, _treasury, _operator, _pid);
+    PLSXBuyAndBurnV3 = await contractFactory.deploy(factoryAddress, SFYAddress, SFYXAddress, WETH);
 
-    console.log(colors.cyan("CakePool Address: ") + colors.yellow(CakePool.address));
+    console.log(colors.cyan("PLSXBuyAndBurnV3 Address: ") + colors.yellow(PLSXBuyAndBurnV3.address));
 
-    await test_util.sleep("120");
+    await test_util.sleep("360");
     //await test_util.updateABI(contractName)
-    await test_util.verify(CakePool.address, contractName, [SFYX, MasterChefV2, _burnAdmin, _treasury, _operator, _pid])
+    await test_util.verify(PLSXBuyAndBurnV3.address, contractName, [factoryAddress, SFYAddress, SFYXAddress, WETH])
+    await test_util.sleep("5");
+    await PLSXBuyAndBurnV3.setAnyAuth();
 
     return true;
 }
