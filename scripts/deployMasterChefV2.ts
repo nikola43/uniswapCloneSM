@@ -19,7 +19,7 @@ async function main() {
     );
     console.log();
 
-    const SFYX = "0x4a364546B6765a3469ab131b96ddEbe4A2199082"
+    const SFYX = "0xab738F29E55DF25D69006AAEFb638307b9b0ED3E"
     const _burnAdmin = deployer.address;
 
     let contractName = "MasterChefV2"

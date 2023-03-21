@@ -14,10 +14,13 @@ contract SFYX is BEP20 {
 
     /// @notice Creates `_amount` token to token address. Must only be called by the owner (MasterChef).
     function mint(uint256 _amount) public override onlyOwner returns (bool) {
-        return mintFor(address(this), _amount);
+        return mintFor(msg.sender, _amount);
     }
 
-    function mintFor(address _address, uint256 _amount) public onlyOwner returns (bool) {
+    function mintFor(
+        address _address,
+        uint256 _amount
+    ) public onlyOwner returns (bool) {
         _mint(_address, _amount);
         require(totalSupply() <= maxSupply, "reach max supply");
         return true;
