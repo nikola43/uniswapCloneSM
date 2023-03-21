@@ -196,7 +196,7 @@ contract MasterChefV2 is Ownable, ReentrancyGuard {
 
     /// @param _CAKE The CAKE token contract address.
     /// @param _burnAdmin The address of burn admin.
-    constructor(IBEP20 _CAKE, address _burnAdmin) public {
+    constructor(IBEP20 _CAKE, address _burnAdmin) {
         CAKE = _CAKE;
         burnAdmin = _burnAdmin;
     }
@@ -395,6 +395,7 @@ contract MasterChefV2 is Ownable, ReentrancyGuard {
                     .mul(cakePerBlock(pool.isRegular))
                     .mul(pool.allocPoint)
                     .div(totalAllocPoint);
+                CAKE.mint(cakeReward);
                 pool.accCakePerShare = pool.accCakePerShare.add(
                     (cakeReward.mul(ACC_CAKE_PRECISION).div(lpSupply))
                 );
