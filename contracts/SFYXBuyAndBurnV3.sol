@@ -1331,14 +1331,14 @@ interface IUniswapV2Factory {
     function setFeeToSetter(address) external;
 }
 
-// File: contracts/PLSXBuyAndBurnV3.sol
+// File: contracts/SFYXBuyAndBurnV3.sol
 
 // P1 - P3: OK
 pragma solidity 0.6.6;
 
-// PLSXBuyAndBurn is a contract that converts received LP tokens from platform fees for PLSX and then burns it.
-// The caller of convertMultiple, the function responsible for converting fees to PLSX earns a 0.1% reward for calling.
-contract PLSXBuyAndBurnV3 is Ownable, ReentrancyGuard {
+// SFYXBuyAndBurn is a contract that converts received LP tokens from platform fees for SFYX and then burns it.
+// The caller of convertMultiple, the function responsible for converting fees to SFYX earns a 0.1% reward for calling.
+contract SFYXBuyAndBurnV3 is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
