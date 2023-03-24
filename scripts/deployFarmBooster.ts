@@ -6,11 +6,7 @@ import { Contract } from 'ethers';
 const colors = require('colors/safe');
 async function main() {
 
-    let SFYXBuyAndBurnV3: Contract;
-    const WETH = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
-    const factoryAddress = "0x98c63E02E729e53639c044F377Ad4E11C85F7703"
-    const SFYXAddress = "0xab738F29E55DF25D69006AAEFb638307b9b0ED3E"
-    const SFYAddress = "0x65f6E06C324c7c167576756A365e221BC0657816"
+    let FarmBooster: Contract;
 
     const [deployer] = await ethers.getSigners();
     if (deployer === undefined) throw new Error("Deployer is undefined.");
@@ -23,17 +19,24 @@ async function main() {
     );
     console.log();
 
-    let contractName = "SFYXBuyAndBurnV3"
+    const SFYX = "0xab738F29E55DF25D69006AAEFb638307b9b0ED3E"
+    const cakePool = "0x2c66bd72C1Db9AE036675050eCbFa787ce990c35"
+    const MasterChefV2 = "0x8024c5299c301fbB87d2e6Df6f4F6bdF7B80B9C8"
+    const max = 3
+    const cA = 50000
+    const cB = 10
+
+
+
+    let contractName = "FarmBooster"
     const contractFactory = await ethers.getContractFactory(contractName);
-    SFYXBuyAndBurnV3 = await contractFactory.deploy(factoryAddress, SFYAddress, SFYXAddress, WETH);
+    FarmBooster = await contractFactory.deploy(SFYX, cakePool, MasterChefV2, max, cA, cB);
 
-    console.log(colors.cyan("SFYXBuyAndBurnV3 Address: ") + colors.yellow(SFYXBuyAndBurnV3.address));
+    console.log(colors.cyan("MasterChef Address: ") + colors.yellow(FarmBooster.address));
 
-    await test_util.sleep("360");
+    await test_util.sleep("120");
     //await test_util.updateABI(contractName)
-    await test_util.verify(SFYXBuyAndBurnV3.address, contractName, [factoryAddress, SFYAddress, SFYXAddress, WETH])
-    await test_util.sleep("5");
-    await SFYXBuyAndBurnV3.setAnyAuth();
+    await test_util.verify(FarmBooster.address, contractName, [SFYX, cakePool, MasterChefV2, max, cA, cB])
 
     return true;
 }

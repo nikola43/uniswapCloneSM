@@ -1338,7 +1338,7 @@ pragma solidity 0.6.6;
 
 // SFYXBuyAndBurn is a contract that converts received LP tokens from platform fees for SFYX and then burns it.
 // The caller of convertMultiple, the function responsible for converting fees to SFYX earns a 0.1% reward for calling.
-contract SFYXBuyAndBurnV3 is Ownable, ReentrancyGuard {
+contract SFYXBuyAndBurn is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
