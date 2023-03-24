@@ -3,9 +3,9 @@
 pragma solidity >=0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "./libraries/SafeMath.sol";
-import "./interfaces/IBEP20.sol";
-import "./token/SafeBEP20.sol";
+import "../libraries/SafeMath.sol";
+import "../tokens/interfaces/IBEP20.sol";
+import "../tokens/SafeBEP20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**

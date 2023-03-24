@@ -2,7 +2,7 @@
 
 pragma solidity >=0.4.0;
 
-import "../interfaces/IBEP20.sol";
+import "./interfaces/IBEP20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "../libraries/SafeMath.sol";

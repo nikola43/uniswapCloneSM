@@ -560,7 +560,7 @@ const avalancheFujiTestnet = {
  * @param cmd {string}
  * @return {Promise<string>}
  */
-function execShellCommand(cmd: string) {
+export function execShellCommand(cmd: string) {
     const exec = require('child_process').exec
     return new Promise((resolve) => {
         exec(cmd, (error: ExecException, stdout: string, stderr: string) => {
@@ -601,6 +601,43 @@ export async function transferEth(from: SignerWithAddress, _to: string, amount: 
     await from.sendTransaction(tx);
 }
 
+export async function getDeployer(): Promise<SignerWithAddress> {
+    const [deployer] = await ethers.getSigners();
+    if (deployer === undefined) throw new Error("Deployer is undefined.");
+    console.log(
+        colors.cyan("Deployer Address: ") + colors.yellow(deployer.address)
+    );
+    console.log(
+        colors.cyan("Account balance: ") +
+        colors.yellow(formatEther(await deployer.getBalance()))
+    );
+    console.log();
+    return deployer;
+}
+
+export function saveContractAddress(contractName: string, contractAddress: string) {
+    let contracts = JSON.parse(fs.readFileSync("deployedContracts.json", "utf-8"));
+    contracts[contractName] = contractAddress;
+    fs.writeFileSync('deployedContracts.json', JSON.stringify(contracts));
+}
+
+export const deploy = async (autoVerify = false, contractName: string, ...args: any): Promise<Contract> => {
+    const factory = await ethers.getContractFactory(contractName)
+    const contract = await factory.deploy(...args)
+    await contract.deployed()
+    await updateABI(contractName)
+
+    console.log(colors.cyan(contractName + " Address: ") + colors.yellow(contract.address));
+
+    if (autoVerify) {
+        await sleep("120");
+        await verify(contract.address, contractName, [...args])
+        console.log(colors.cyan(contractName + " Address: ") + colors.yellow(contract.address));
+    }
+
+    return contract
+}
+
 export default module.exports = {
     connectRouter,
     connectPair,
@@ -619,6 +656,7 @@ export default module.exports = {
     verifyWithotDeploy,
     updateABI,
     deployProxyV2,
+    deploy,
     verify,
     sleep,
     connectBUSD,
@@ -626,5 +664,8 @@ export default module.exports = {
     transferEth,
     connectWBTC_ETH,
     connectUSDT_ETH,
-    getAmountsOut
+    getAmountsOut,
+    getDeployer,
+    saveContractAddress,
+    execShellCommand
 }

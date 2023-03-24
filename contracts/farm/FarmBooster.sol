@@ -2,10 +2,10 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/IBEP20.sol";
+import "../tokens/interfaces/IBEP20.sol";
 import "./interfaces/ICakePool.sol";
 import "./interfaces/IMasterChefV2.sol";
-import "./libraries/IterateMapping.sol";
+import "../libraries/IterateMapping.sol";
 
 contract FarmBooster is Ownable {
     using IterableMapping for ItMap;

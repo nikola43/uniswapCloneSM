@@ -10,8 +10,8 @@
 
 pragma solidity 0.6.12;
 
-import "./libraries/SafeMath.sol";
-import "./interfaces/IBEP20.sol";
+import "../libraries/SafeMath.sol";
+import "../tokens/interfaces/IBEP20.sol";
 import "./helpers/ReentrancyGuard.sol";
 
 interface IMasterChef {
