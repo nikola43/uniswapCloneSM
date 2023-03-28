@@ -7,19 +7,22 @@ import 'solidity-coverage'
 import '@openzeppelin/hardhat-upgrades'
 import * as dotenv from 'dotenv'
 
+const chains = require('./config.json')
+
 dotenv.config()
 const mnemonic = process.env.DEPLOYER_PKY_KEY;
+const chain = chains[process.env.CHAIN ?? 'ethereum_goerli']
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
     localhost: {
-      url: "http://127.0.0.1:8545",
       accounts: [`${mnemonic}`],
+      url: "http://127.0.0.1:8545",
     },
     hardhat: {
       forking: {
-        url: 'https://rpc.ankr.com/bsc_testnet_chapel',
+        url: chain.endpoint,
       },
     },
     mainnet: {
@@ -162,9 +165,9 @@ const config: HardhatUserConfig = {
       //mumbai: "ZC7F1IU2EXVW2K171X5FW3M4TYHF3KW2DF", // polygon
       rinkeby: "GZE9R1WSWT3QZH14EXB1WKU5ZZ66ANFFEW", // eth
 
-      goerli: "K8RG5EFT7F4C9K5J3ZH3XRW775SSG7Z1U5", // eth
-      mainnet: "K8RG5EFT7F4C9K5J3ZH3XRW775SSG7Z1U5", // eth
-      sepolia: "K8RG5EFT7F4C9K5J3ZH3XRW775SSG7Z1U5", // eth
+      goerli: "GZE9R1WSWT3QZH14EXB1WKU5ZZ66ANFFEW", // eth
+      mainnet: "GZE9R1WSWT3QZH14EXB1WKU5ZZ66ANFFEW", // eth
+      sepolia: "GZE9R1WSWT3QZH14EXB1WKU5ZZ66ANFFEW", // eth
 
       //optimism: "R5W7SC6B9MY4999NQYX9S4SU9DE86F15KB", // optimism
       //optimismTestnet: "R5W7SC6B9MY4999NQYX9S4SU9DE86F15KB", // optimism
@@ -176,7 +179,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: '0.8.17',
+        version: '0.8.19',
         settings: {
           optimizer: {
             enabled: true,
@@ -185,7 +188,7 @@ const config: HardhatUserConfig = {
         }
       },
       {
-        version: '0.6.12', // Pancake Router
+        version: '0.6.12', // Pan9inch Router
         settings: {
           optimizer: {
             enabled: true
@@ -202,16 +205,16 @@ const config: HardhatUserConfig = {
         }
       },
       {
-        version: '0.8.2' // Pancake Pair
+        version: '0.8.2' // Pan9inch Pair
       },
       {
         version: '0.5.17' // WAVAX
       },
       {
-        version: '0.5.16' // Pancake / Pangolin -> Pair / Factory
+        version: '0.5.16' // Pan9inch / Pangolin -> Pair / Factory
       },
       {
-        version: '0.5.0' // Pancake Pair
+        version: '0.5.0' // Pan9inch Pair
       },
       {
         version: '0.4.24' // WBTC
@@ -238,7 +241,7 @@ const config: HardhatUserConfig = {
     token: "BNB",
     currency: 'USD',
     gasPrice: 10,
-    enabled: false,
+    enabled: true,
     coinmarketcap: '0caa3779-3cb2-4665-a7d3-652823b53908'
   }
 };

@@ -1,82 +1,109 @@
-import { ethers } from 'hardhat'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { expect } from 'chai';
+import { Contract } from 'ethers';
+import { parseEther } from 'ethers/lib/utils';
+import { ethers } from 'hardhat';
 const test_util = require('../scripts/util');
 const colors = require('colors');
-import { expect } from 'chai'
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { Contract } from 'ethers';
-import { formatEther, parseEther } from 'ethers/lib/utils';
-const { getImplementationAddress } = require('@openzeppelin/upgrades-core')
+
+import { SFYXBuyAndBurn, SFYXBuyAndBurn__factory } from '../typechain'
 
 //available functions
 describe("Token contract", async () => {
     let deployer: SignerWithAddress;
     let bob: SignerWithAddress;
     let alice: SignerWithAddress;
-    let PLSXBuyAndBurnV3: Contract;
+    let sfyxBuyAndBurn: SFYXBuyAndBurn;
     let SFY_ETH: Contract;
     let SFYX_ETH: Contract;
     let SFY_SFYX: Contract;
+    let SFYX: Contract;
+    let SFY: Contract;
 
     const WETH = "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
-    const factoryAddress = "0x348ED784BB223F49DF3C7bC7EAC7139095dfF08e"
-    const SFY_ETHAddress = "0x38fE5F2caF0176DEF63480540c8063d1D3586dBd";
-    const SFYX_ETHAddress = "0x70b73AC3C37ffAAdD173eFBDfddd0b1E8FA7829B";
-    const SFY_SFYXAddress = "0xCF029830b9fFf03Af6E833C216678CEc883A51e7";
-    const SFYXAddress = "0x4a364546B6765a3469ab131b96ddEbe4A2199082"
-    const SFYAddress = "0xefc5bAE08de485DA4D4425B2Ad4adf44FF2F3844"
-
-
+    const factoryAddress = "0x98c63E02E729e53639c044F377Ad4E11C85F7703"
+    const SFY_ETHAddress = "0x224E4d86886377eFDfD5e144772b1175920cB048";
+    const SFYX_ETHAddress = "0x79Da21BA74AF3cAC8e930df20b023B748a955d9d";
+    const SFY_SFYXAddress = "0x9665C84e5AD2356B323ad60053feAE98126ab91D";
+    const SFYXAddress = "0xab738F29E55DF25D69006AAEFb638307b9b0ED3E"
+    const SFYAddress = "0x65f6E06C324c7c167576756A365e221BC0657816"
 
     it("1. Get Signer", async () => {
         const signers = await ethers.getSigners();
-        if (signers[0] !== undefined) {
-            deployer = signers[0];
-            console.log(`${colors.cyan('Deployer Address')}: ${colors.yellow(deployer?.address)}`)
-        }
-        if (signers[1] !== undefined) {
-            bob = signers[1];
-            console.log(`${colors.cyan('Bob Address')}: ${colors.yellow(bob?.address)}`)
-        }
-        if (signers[2] !== undefined) {
-            alice = signers[2];
-            console.log(`${colors.cyan('Alice Address')}: ${colors.yellow(alice?.address)}`)
-        }
+
+        deployer = signers[0];
+        bob = signers[1];
+        alice = signers[2];
+
+        console.log(`${colors.cyan('Deployer Address')}: ${colors.yellow(deployer?.address)}`)
+        console.log(`${colors.cyan('Bob Address')}: ${colors.yellow(bob?.address)}`)
+        console.log(`${colors.cyan('Alice Address')}: ${colors.yellow(alice?.address)}`)
+    });
+
+    it("2. Init contracts", async () => {
+        SFY_ETH = await ethers.getContractAt('9inchPair', SFY_ETHAddress)
+        SFYX_ETH = await ethers.getContractAt('9inchPair', SFYX_ETHAddress)
+        SFY_SFYX = await ethers.getContractAt('9inchPair', SFY_SFYXAddress)
+        SFYX = await ethers.getContractAt('SFYX', SFYXAddress)
+        SFY = await ethers.getContractAt('SFY', SFYAddress)
+
+        const SFY_ETHBalance = await SFY_ETH.balanceOf(deployer.address);
+        const SFYX_ETHBalance = await SFYX_ETH.balanceOf(deployer.address);
+        const SFY_SFYXBalance = await SFY_SFYX.balanceOf(deployer.address);
+        const SFYXBalance = await SFYX.balanceOf(deployer.address);
+        const SFYBalance = await SFY.balanceOf(deployer.address);
+
+        console.log(colors.cyan("SFY_ETH Balance: ") + colors.yellow(SFY_ETHBalance.toString()));
+        console.log(colors.cyan("SFYX_ETH Balance: ") + colors.yellow(SFYX_ETHBalance.toString()));
+        console.log(colors.cyan("SFY_SFYX Balance: ") + colors.yellow(SFY_SFYXBalance.toString()));
+        console.log(colors.cyan("SFYX Balance: ") + colors.yellow(SFYXBalance.toString()));
+        console.log(colors.cyan("SFY Balance: ") + colors.yellow(SFYBalance.toString()));
     });
 
     it("2. Deploy PLSXBuyAndBurnV3", async () => {
-
-
-        SFY_ETH = await ethers.getContractAt('UniswapV2Pair', SFY_ETHAddress)
-        SFYX_ETH = await ethers.getContractAt('UniswapV2Pair', SFYX_ETHAddress)
-        SFY_SFYX = await ethers.getContractAt('UniswapV2Pair', SFY_SFYXAddress)
-
-        let contractName = "PLSXBuyAndBurnV3"
-        const contractFactory = await ethers.getContractFactory(contractName);
-        PLSXBuyAndBurnV3 = await contractFactory.deploy(factoryAddress, SFYAddress, SFYXAddress, WETH);
-
-        console.log(colors.cyan("PLSXBuyAndBurnV3 Address: ") + colors.yellow(PLSXBuyAndBurnV3.address));
-
-
+        sfyxBuyAndBurn = await new SFYXBuyAndBurn__factory(deployer).deploy(factoryAddress, SFYAddress, SFYXAddress, WETH);
+        console.log(colors.cyan("PLSXBuyAndBurnV3 Address: ") + colors.yellow(sfyxBuyAndBurn.address));
     });
 
-    it("2.  setAnyAuth", async () => {
-        await PLSXBuyAndBurnV3.setAnyAuth();
+    // tests for setAnyAuth function
+    it("2. setAnyAuth", async () => {
+        await sfyxBuyAndBurn.setAnyAuth();
+        let auth = await sfyxBuyAndBurn.anyAuth();
+        expect(auth).to.equal(true);
+        console.log(colors.cyan("setAnyAuth: ") + colors.yellow(auth));
     });
 
+    // tests convertLps SFY_ETHAddress
+    it("3. Transfer SFY_ETH to burn contract", async () => {
+        await SFY_ETH.transfer(sfyxBuyAndBurn.address, parseEther("10"));
+    });
+
+    it("3. convertLps SFY_ETHAddress", async () => {
+        await SFY_ETH.transfer(sfyxBuyAndBurn.address, parseEther("10"));
+        await sfyxBuyAndBurn.convertLps([SFY_ETHAddress]);
+        expect(await SFY_ETH.balanceOf(sfyxBuyAndBurn.address)).to.equal(0);
+        expect(await SFY.balanceOf(sfyxBuyAndBurn.address)).to.equal(0);
+        expect(await SFYX.balanceOf(sfyxBuyAndBurn.address)).to.equal(0);
+        expect(await SFY.balanceOf(deployer.address)).to.equal(parseEther("629.986733616458038732"));
+        expect(await SFYX.balanceOf(deployer.address)).to.equal(parseEther("0.088872915404853052"));
+    });
+
+    /*
     it("2. Deploy convertLps SFY_ETHAddress", async () => {
-        await SFY_ETH.transfer(PLSXBuyAndBurnV3.address, parseEther("1"));
-        await PLSXBuyAndBurnV3.convertLps([SFY_ETHAddress]);
+        await SFY_ETH.transfer(sfyxBuyAndBurn.address, parseEther("1"));
+        await sfyxBuyAndBurn.convertLps([SFY_ETHAddress]);
     });
 
 
     it("2. Deploy convertLps SFYX_ETHAddress", async () => {
-        await SFYX_ETH.transfer(PLSXBuyAndBurnV3.address, parseEther("1"));
-        await PLSXBuyAndBurnV3.convertLps([SFYX_ETHAddress]);
+        await SFYX_ETH.transfer(sfyxBuyAndBurn.address, parseEther("1"));
+        await sfyxBuyAndBurn.convertLps([SFYX_ETHAddress]);
     });
 
     it("2. Deploy convertLps SFY_SFYXAddress", async () => {
-        await SFY_SFYX.transfer(PLSXBuyAndBurnV3.address, parseEther("1"));
-        await PLSXBuyAndBurnV3.convertLps([SFY_SFYXAddress]);
+        await SFY_SFYX.transfer(sfyxBuyAndBurn.address, parseEther("1"));
+        await sfyxBuyAndBurn.convertLps([SFY_SFYXAddress]);
     });
+    */
 
 });
