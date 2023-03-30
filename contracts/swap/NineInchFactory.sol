@@ -4,7 +4,7 @@
 
 pragma solidity =0.5.16;
 
-interface ISwapifyFactory {
+interface INineInchFactory {
     event PairCreated(
         address indexed token0,
         address indexed token1,
@@ -35,7 +35,7 @@ interface ISwapifyFactory {
     function setFeeToSetter(address) external;
 }
 
-interface ISwapifyPair {
+interface INineInchPair {
     event Approval(address indexed owner, address indexed spender, uint value);
     event Transfer(address indexed from, address indexed to, uint value);
 
@@ -134,7 +134,7 @@ interface ISwapifyPair {
     function initialize(address, address) external;
 }
 
-interface ISwapifyERC20 {
+interface INineInchERC20 {
     event Approval(address indexed owner, address indexed spender, uint value);
     event Transfer(address indexed from, address indexed to, uint value);
 
@@ -210,7 +210,7 @@ interface IERC20 {
     ) external returns (bool);
 }
 
-interface ISwapifyCallee {
+interface INineInchCallee {
     function uniswapV2Call(
         address sender,
         uint amount0,
@@ -219,10 +219,10 @@ interface ISwapifyCallee {
     ) external;
 }
 
-contract SwapifyERC20 is ISwapifyERC20 {
+contract NineInchERC20 is INineInchERC20 {
     using SafeMath for uint;
 
-    string public constant name = "Swapify";
+    string public constant name = "NineInch";
     string public constant symbol = "SWFY";
     uint8 public constant decimals = 18;
     uint public totalSupply;
@@ -312,7 +312,7 @@ contract SwapifyERC20 is ISwapifyERC20 {
         bytes32 r,
         bytes32 s
     ) external {
-        require(deadline >= block.timestamp, "Swapify: EXPIRED");
+        require(deadline >= block.timestamp, "NineInch: EXPIRED");
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
@@ -332,13 +332,13 @@ contract SwapifyERC20 is ISwapifyERC20 {
         address recoveredAddress = ecrecover(digest, v, r, s);
         require(
             recoveredAddress != address(0) && recoveredAddress == owner,
-            "Swapify: INVALID_SIGNATURE"
+            "NineInch: INVALID_SIGNATURE"
         );
         _approve(owner, spender, value);
     }
 }
 
-contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
+contract NineInchPair is INineInchPair, NineInchERC20 {
     using SafeMath for uint;
     using UQ112x112 for uint224;
 
@@ -360,7 +360,7 @@ contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
 
     uint private unlocked = 1;
     modifier lock() {
-        require(unlocked == 1, "Swapify: LOCKED");
+        require(unlocked == 1, "NineInch: LOCKED");
         unlocked = 0;
         _;
         unlocked = 1;
@@ -386,7 +386,7 @@ contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
         );
         require(
             success && (data.length == 0 || abi.decode(data, (bool))),
-            "Swapify: TRANSFER_FAILED"
+            "NineInch: TRANSFER_FAILED"
         );
     }
 
@@ -413,7 +413,7 @@ contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
 
     // called once by the factory at time of deployment
     function initialize(address _token0, address _token1) external {
-        require(msg.sender == factory, "Swapify: FORBIDDEN"); // sufficient check
+        require(msg.sender == factory, "NineInch: FORBIDDEN"); // sufficient check
         token0 = _token0;
         token1 = _token1;
     }
@@ -427,7 +427,7 @@ contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
     ) private {
         require(
             balance0 <= uint112(-1) && balance1 <= uint112(-1),
-            "Swapify: OVERFLOW"
+            "NineInch: OVERFLOW"
         );
         uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
@@ -451,7 +451,7 @@ contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
         uint112 _reserve0,
         uint112 _reserve1
     ) private returns (bool feeOn) {
-        address feeTo = ISwapifyFactory(factory).feeTo();
+        address feeTo = INineInchFactory(factory).feeTo();
         feeOn = feeTo != address(0);
         uint _kLast = kLast; // gas savings
         if (feeOn) {
@@ -489,7 +489,7 @@ contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
                 amount1.mul(_totalSupply) / _reserve1
             );
         }
-        require(liquidity > 0, "Swapify: INSUFFICIENT_LIQUIDITY_MINTED");
+        require(liquidity > 0, "NineInch: INSUFFICIENT_LIQUIDITY_MINTED");
         _mint(to, liquidity);
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -514,7 +514,7 @@ contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
         amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
         require(
             amount0 > 0 && amount1 > 0,
-            "Swapify: INSUFFICIENT_LIQUIDITY_BURNED"
+            "NineInch: INSUFFICIENT_LIQUIDITY_BURNED"
         );
         _burn(address(this), liquidity);
         _safeTransfer(_token0, to, amount0);
@@ -536,12 +536,12 @@ contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
     ) external lock {
         require(
             amount0Out > 0 || amount1Out > 0,
-            "Swapify: INSUFFICIENT_OUTPUT_AMOUNT"
+            "NineInch: INSUFFICIENT_OUTPUT_AMOUNT"
         );
         (uint112 _reserve0, uint112 _reserve1, ) = getReserves(); // gas savings
         require(
             amount0Out < _reserve0 && amount1Out < _reserve1,
-            "Swapify: INSUFFICIENT_LIQUIDITY"
+            "NineInch: INSUFFICIENT_LIQUIDITY"
         );
 
         uint balance0;
@@ -550,11 +550,11 @@ contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
             // scope for _token{0,1}, avoids stack too deep errors
             address _token0 = token0;
             address _token1 = token1;
-            require(to != _token0 && to != _token1, "Swapify: INVALID_TO");
+            require(to != _token0 && to != _token1, "NineInch: INVALID_TO");
             if (amount0Out > 0) _safeTransfer(_token0, to, amount0Out); // optimistically transfer tokens
             if (amount1Out > 0) _safeTransfer(_token1, to, amount1Out); // optimistically transfer tokens
             if (data.length > 0)
-                ISwapifyCallee(to).uniswapV2Call(
+                INineInchCallee(to).uniswapV2Call(
                     msg.sender,
                     amount0Out,
                     amount1Out,
@@ -571,7 +571,7 @@ contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
             : 0;
         require(
             amount0In > 0 || amount1In > 0,
-            "Swapify: INSUFFICIENT_INPUT_AMOUNT"
+            "NineInch: INSUFFICIENT_INPUT_AMOUNT"
         );
         {
             // scope for reserve{0,1}Adjusted, avoids stack too deep errors
@@ -580,7 +580,7 @@ contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
             require(
                 balance0Adjusted.mul(balance1Adjusted) >=
                     uint(_reserve0).mul(_reserve1).mul(10000 ** 2),
-                "Swapify: K"
+                "NineInch: K"
             );
         }
 
@@ -615,12 +615,12 @@ contract SwapifyPair is ISwapifyPair, SwapifyERC20 {
     }
 }
 
-contract SwapifyFactory is ISwapifyFactory {
+contract NineInchFactory is INineInchFactory {
     address public feeTo;
     address public feeToSetter;
 
     bytes32 public constant INIT_CODE_PAIR_HASH =
-        keccak256(abi.encodePacked(type(SwapifyPair).creationCode));
+        keccak256(abi.encodePacked(type(NineInchPair).creationCode));
 
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
@@ -644,21 +644,21 @@ contract SwapifyFactory is ISwapifyFactory {
         address tokenA,
         address tokenB
     ) external returns (address pair) {
-        require(tokenA != tokenB, "Swapify: IDENTICAL_ADDRESSES");
+        require(tokenA != tokenB, "NineInch: IDENTICAL_ADDRESSES");
         (address token0, address token1) = tokenA < tokenB
             ? (tokenA, tokenB)
             : (tokenB, tokenA);
-        require(token0 != address(0), "Swapify: ZERO_ADDRESS");
+        require(token0 != address(0), "NineInch: ZERO_ADDRESS");
         require(
             getPair[token0][token1] == address(0),
-            "Swapify: PAIR_EXISTS"
+            "NineInch: PAIR_EXISTS"
         ); // single check is sufficient
-        bytes memory bytecode = type(SwapifyPair).creationCode;
+        bytes memory bytecode = type(NineInchPair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
         assembly {
             pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
-        ISwapifyPair(pair).initialize(token0, token1);
+        INineInchPair(pair).initialize(token0, token1);
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
         allPairs.push(pair);
@@ -666,12 +666,12 @@ contract SwapifyFactory is ISwapifyFactory {
     }
 
     function setFeeTo(address _feeTo) external {
-        require(msg.sender == feeToSetter, "Swapify: FORBIDDEN");
+        require(msg.sender == feeToSetter, "NineInch: FORBIDDEN");
         feeTo = _feeTo;
     }
 
     function setFeeToSetter(address _feeToSetter) external {
-        require(msg.sender == feeToSetter, "Swapify: FORBIDDEN");
+        require(msg.sender == feeToSetter, "NineInch: FORBIDDEN");
         feeToSetter = _feeToSetter;
     }
 }

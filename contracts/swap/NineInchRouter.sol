@@ -4,7 +4,7 @@
 
 pragma solidity =0.6.6;
 
-interface ISwapifyV2Factory {
+interface INineInchV2Factory {
     event PairCreated(
         address indexed token0,
         address indexed token1,
@@ -35,7 +35,7 @@ interface ISwapifyV2Factory {
     function setFeeToSetter(address) external;
 }
 
-interface ISwapifyV2Pair {
+interface INineInchV2Pair {
     event Approval(address indexed owner, address indexed spender, uint value);
     event Transfer(address indexed from, address indexed to, uint value);
 
@@ -134,7 +134,7 @@ interface ISwapifyV2Pair {
     function initialize(address, address) external;
 }
 
-interface ISwapifyRouter01 {
+interface INineInchRouter01 {
     function factory() external pure returns (address);
 
     function WETH() external pure returns (address);
@@ -283,7 +283,7 @@ interface ISwapifyRouter01 {
     ) external view returns (uint[] memory amounts);
 }
 
-interface ISwapifyRouter is ISwapifyRouter01 {
+interface INineInchRouter is INineInchRouter01 {
     function removeLiquidityETHSupportingFeeOnTransferTokens(
         address token,
         uint liquidity,
@@ -368,14 +368,14 @@ interface IWETH {
     function withdraw(uint) external;
 }
 
-contract SwapifyRouter is ISwapifyRouter {
+contract NineInchRouter is INineInchRouter {
     using SafeMath for uint;
 
     address public immutable override factory;
     address public immutable override WETH;
 
     modifier ensure(uint deadline) {
-        require(deadline >= block.timestamp, "SwapifyRouter: EXPIRED");
+        require(deadline >= block.timestamp, "NineInchRouter: EXPIRED");
         _;
     }
 
@@ -398,10 +398,10 @@ contract SwapifyRouter is ISwapifyRouter {
         uint amountBMin
     ) internal virtual returns (uint amountA, uint amountB) {
         // create the pair if it doesn't exist yet
-        if (ISwapifyV2Factory(factory).getPair(tokenA, tokenB) == address(0)) {
-            ISwapifyV2Factory(factory).createPair(tokenA, tokenB);
+        if (INineInchV2Factory(factory).getPair(tokenA, tokenB) == address(0)) {
+            INineInchV2Factory(factory).createPair(tokenA, tokenB);
         }
-        (uint reserveA, uint reserveB) = SwapifyV2Library.getReserves(
+        (uint reserveA, uint reserveB) = NineInchV2Library.getReserves(
             factory,
             tokenA,
             tokenB
@@ -409,7 +409,7 @@ contract SwapifyRouter is ISwapifyRouter {
         if (reserveA == 0 && reserveB == 0) {
             (amountA, amountB) = (amountADesired, amountBDesired);
         } else {
-            uint amountBOptimal = SwapifyV2Library.quote(
+            uint amountBOptimal = NineInchV2Library.quote(
                 amountADesired,
                 reserveA,
                 reserveB
@@ -417,11 +417,11 @@ contract SwapifyRouter is ISwapifyRouter {
             if (amountBOptimal <= amountBDesired) {
                 require(
                     amountBOptimal >= amountBMin,
-                    "SwapifyRouter: INSUFFICIENT_B_AMOUNT"
+                    "NineInchRouter: INSUFFICIENT_B_AMOUNT"
                 );
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
-                uint amountAOptimal = SwapifyV2Library.quote(
+                uint amountAOptimal = NineInchV2Library.quote(
                     amountBDesired,
                     reserveB,
                     reserveA
@@ -429,7 +429,7 @@ contract SwapifyRouter is ISwapifyRouter {
                 assert(amountAOptimal <= amountADesired);
                 require(
                     amountAOptimal >= amountAMin,
-                    "SwapifyRouter: INSUFFICIENT_A_AMOUNT"
+                    "NineInchRouter: INSUFFICIENT_A_AMOUNT"
                 );
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
@@ -460,10 +460,10 @@ contract SwapifyRouter is ISwapifyRouter {
             amountAMin,
             amountBMin
         );
-        address pair = SwapifyV2Library.pairFor(factory, tokenA, tokenB);
+        address pair = NineInchV2Library.pairFor(factory, tokenA, tokenB);
         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
         TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
-        liquidity = ISwapifyV2Pair(pair).mint(to);
+        liquidity = INineInchV2Pair(pair).mint(to);
     }
 
     function addLiquidityETH(
@@ -489,11 +489,11 @@ contract SwapifyRouter is ISwapifyRouter {
             amountTokenMin,
             amountETHMin
         );
-        address pair = SwapifyV2Library.pairFor(factory, token, WETH);
+        address pair = NineInchV2Library.pairFor(factory, token, WETH);
         TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
         IWETH(WETH).deposit{value: amountETH}();
         assert(IWETH(WETH).transfer(pair, amountETH));
-        liquidity = ISwapifyV2Pair(pair).mint(to);
+        liquidity = INineInchV2Pair(pair).mint(to);
         // refund dust eth, if any
         if (msg.value > amountETH)
             TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
@@ -515,20 +515,20 @@ contract SwapifyRouter is ISwapifyRouter {
         ensure(deadline)
         returns (uint amountA, uint amountB)
     {
-        address pair = SwapifyV2Library.pairFor(factory, tokenA, tokenB);
-        ISwapifyV2Pair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
-        (uint amount0, uint amount1) = ISwapifyV2Pair(pair).burn(to);
-        (address token0, ) = SwapifyV2Library.sortTokens(tokenA, tokenB);
+        address pair = NineInchV2Library.pairFor(factory, tokenA, tokenB);
+        INineInchV2Pair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
+        (uint amount0, uint amount1) = INineInchV2Pair(pair).burn(to);
+        (address token0, ) = NineInchV2Library.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0
             ? (amount0, amount1)
             : (amount1, amount0);
         require(
             amountA >= amountAMin,
-            "SwapifyRouter: INSUFFICIENT_A_AMOUNT"
+            "NineInchRouter: INSUFFICIENT_A_AMOUNT"
         );
         require(
             amountB >= amountBMin,
-            "SwapifyRouter: INSUFFICIENT_B_AMOUNT"
+            "NineInchRouter: INSUFFICIENT_B_AMOUNT"
         );
     }
 
@@ -573,9 +573,9 @@ contract SwapifyRouter is ISwapifyRouter {
         bytes32 r,
         bytes32 s
     ) external virtual override returns (uint amountA, uint amountB) {
-        address pair = SwapifyV2Library.pairFor(factory, tokenA, tokenB);
+        address pair = NineInchV2Library.pairFor(factory, tokenA, tokenB);
         uint value = approveMax ? uint(-1) : liquidity;
-        ISwapifyV2Pair(pair).permit(
+        INineInchV2Pair(pair).permit(
             msg.sender,
             address(this),
             value,
@@ -607,9 +607,9 @@ contract SwapifyRouter is ISwapifyRouter {
         bytes32 r,
         bytes32 s
     ) external virtual override returns (uint amountToken, uint amountETH) {
-        address pair = SwapifyV2Library.pairFor(factory, token, WETH);
+        address pair = NineInchV2Library.pairFor(factory, token, WETH);
         uint value = approveMax ? uint(-1) : liquidity;
-        ISwapifyV2Pair(pair).permit(
+        INineInchV2Pair(pair).permit(
             msg.sender,
             address(this),
             value,
@@ -667,9 +667,9 @@ contract SwapifyRouter is ISwapifyRouter {
         bytes32 r,
         bytes32 s
     ) external virtual override returns (uint amountETH) {
-        address pair = SwapifyV2Library.pairFor(factory, token, WETH);
+        address pair = NineInchV2Library.pairFor(factory, token, WETH);
         uint value = approveMax ? uint(-1) : liquidity;
-        ISwapifyV2Pair(pair).permit(
+        INineInchV2Pair(pair).permit(
             msg.sender,
             address(this),
             value,
@@ -697,15 +697,15 @@ contract SwapifyRouter is ISwapifyRouter {
     ) internal virtual {
         for (uint i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
-            (address token0, ) = SwapifyV2Library.sortTokens(input, output);
+            (address token0, ) = NineInchV2Library.sortTokens(input, output);
             uint amountOut = amounts[i + 1];
             (uint amount0Out, uint amount1Out) = input == token0
                 ? (uint(0), amountOut)
                 : (amountOut, uint(0));
             address to = i < path.length - 2
-                ? SwapifyV2Library.pairFor(factory, output, path[i + 2])
+                ? NineInchV2Library.pairFor(factory, output, path[i + 2])
                 : _to;
-            ISwapifyV2Pair(SwapifyV2Library.pairFor(factory, input, output))
+            INineInchV2Pair(NineInchV2Library.pairFor(factory, input, output))
                 .swap(amount0Out, amount1Out, to, new bytes(0));
         }
     }
@@ -723,15 +723,15 @@ contract SwapifyRouter is ISwapifyRouter {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        amounts = SwapifyV2Library.getAmountsOut(factory, amountIn, path);
+        amounts = NineInchV2Library.getAmountsOut(factory, amountIn, path);
         require(
             amounts[amounts.length - 1] >= amountOutMin,
-            "SwapifyRouter: INSUFFICIENT_OUTPUT_AMOUNT"
+            "NineInchRouter: INSUFFICIENT_OUTPUT_AMOUNT"
         );
         TransferHelper.safeTransferFrom(
             path[0],
             msg.sender,
-            SwapifyV2Library.pairFor(factory, path[0], path[1]),
+            NineInchV2Library.pairFor(factory, path[0], path[1]),
             amounts[0]
         );
         _swap(amounts, path, to);
@@ -750,15 +750,15 @@ contract SwapifyRouter is ISwapifyRouter {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        amounts = SwapifyV2Library.getAmountsIn(factory, amountOut, path);
+        amounts = NineInchV2Library.getAmountsIn(factory, amountOut, path);
         require(
             amounts[0] <= amountInMax,
-            "SwapifyRouter: EXCESSIVE_INPUT_AMOUNT"
+            "NineInchRouter: EXCESSIVE_INPUT_AMOUNT"
         );
         TransferHelper.safeTransferFrom(
             path[0],
             msg.sender,
-            SwapifyV2Library.pairFor(factory, path[0], path[1]),
+            NineInchV2Library.pairFor(factory, path[0], path[1]),
             amounts[0]
         );
         _swap(amounts, path, to);
@@ -777,16 +777,16 @@ contract SwapifyRouter is ISwapifyRouter {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[0] == WETH, "SwapifyRouter: INVALID_PATH");
-        amounts = SwapifyV2Library.getAmountsOut(factory, msg.value, path);
+        require(path[0] == WETH, "NineInchRouter: INVALID_PATH");
+        amounts = NineInchV2Library.getAmountsOut(factory, msg.value, path);
         require(
             amounts[amounts.length - 1] >= amountOutMin,
-            "SwapifyRouter: INSUFFICIENT_OUTPUT_AMOUNT"
+            "NineInchRouter: INSUFFICIENT_OUTPUT_AMOUNT"
         );
         IWETH(WETH).deposit{value: amounts[0]}();
         assert(
             IWETH(WETH).transfer(
-                SwapifyV2Library.pairFor(factory, path[0], path[1]),
+                NineInchV2Library.pairFor(factory, path[0], path[1]),
                 amounts[0]
             )
         );
@@ -806,16 +806,16 @@ contract SwapifyRouter is ISwapifyRouter {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[path.length - 1] == WETH, "SwapifyRouter: INVALID_PATH");
-        amounts = SwapifyV2Library.getAmountsIn(factory, amountOut, path);
+        require(path[path.length - 1] == WETH, "NineInchRouter: INVALID_PATH");
+        amounts = NineInchV2Library.getAmountsIn(factory, amountOut, path);
         require(
             amounts[0] <= amountInMax,
-            "SwapifyRouter: EXCESSIVE_INPUT_AMOUNT"
+            "NineInchRouter: EXCESSIVE_INPUT_AMOUNT"
         );
         TransferHelper.safeTransferFrom(
             path[0],
             msg.sender,
-            SwapifyV2Library.pairFor(factory, path[0], path[1]),
+            NineInchV2Library.pairFor(factory, path[0], path[1]),
             amounts[0]
         );
         _swap(amounts, path, address(this));
@@ -836,16 +836,16 @@ contract SwapifyRouter is ISwapifyRouter {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[path.length - 1] == WETH, "SwapifyRouter: INVALID_PATH");
-        amounts = SwapifyV2Library.getAmountsOut(factory, amountIn, path);
+        require(path[path.length - 1] == WETH, "NineInchRouter: INVALID_PATH");
+        amounts = NineInchV2Library.getAmountsOut(factory, amountIn, path);
         require(
             amounts[amounts.length - 1] >= amountOutMin,
-            "SwapifyRouter: INSUFFICIENT_OUTPUT_AMOUNT"
+            "NineInchRouter: INSUFFICIENT_OUTPUT_AMOUNT"
         );
         TransferHelper.safeTransferFrom(
             path[0],
             msg.sender,
-            SwapifyV2Library.pairFor(factory, path[0], path[1]),
+            NineInchV2Library.pairFor(factory, path[0], path[1]),
             amounts[0]
         );
         _swap(amounts, path, address(this));
@@ -866,16 +866,16 @@ contract SwapifyRouter is ISwapifyRouter {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[0] == WETH, "SwapifyRouter: INVALID_PATH");
-        amounts = SwapifyV2Library.getAmountsIn(factory, amountOut, path);
+        require(path[0] == WETH, "NineInchRouter: INVALID_PATH");
+        amounts = NineInchV2Library.getAmountsIn(factory, amountOut, path);
         require(
             amounts[0] <= msg.value,
-            "SwapifyRouter: EXCESSIVE_INPUT_AMOUNT"
+            "NineInchRouter: EXCESSIVE_INPUT_AMOUNT"
         );
         IWETH(WETH).deposit{value: amounts[0]}();
         assert(
             IWETH(WETH).transfer(
-                SwapifyV2Library.pairFor(factory, path[0], path[1]),
+                NineInchV2Library.pairFor(factory, path[0], path[1]),
                 amounts[0]
             )
         );
@@ -893,9 +893,9 @@ contract SwapifyRouter is ISwapifyRouter {
     ) internal virtual {
         for (uint i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
-            (address token0, ) = SwapifyV2Library.sortTokens(input, output);
-            ISwapifyV2Pair pair = ISwapifyV2Pair(
-                SwapifyV2Library.pairFor(factory, input, output)
+            (address token0, ) = NineInchV2Library.sortTokens(input, output);
+            INineInchV2Pair pair = INineInchV2Pair(
+                NineInchV2Library.pairFor(factory, input, output)
             );
             uint amountInput;
             uint amountOutput;
@@ -908,7 +908,7 @@ contract SwapifyRouter is ISwapifyRouter {
                 amountInput = IERC20(input).balanceOf(address(pair)).sub(
                     reserveInput
                 );
-                amountOutput = SwapifyV2Library.getAmountOut(
+                amountOutput = NineInchV2Library.getAmountOut(
                     amountInput,
                     reserveInput,
                     reserveOutput
@@ -918,7 +918,7 @@ contract SwapifyRouter is ISwapifyRouter {
                 ? (uint(0), amountOutput)
                 : (amountOutput, uint(0));
             address to = i < path.length - 2
-                ? SwapifyV2Library.pairFor(factory, output, path[i + 2])
+                ? NineInchV2Library.pairFor(factory, output, path[i + 2])
                 : _to;
             pair.swap(amount0Out, amount1Out, to, new bytes(0));
         }
@@ -934,7 +934,7 @@ contract SwapifyRouter is ISwapifyRouter {
         TransferHelper.safeTransferFrom(
             path[0],
             msg.sender,
-            SwapifyV2Library.pairFor(factory, path[0], path[1]),
+            NineInchV2Library.pairFor(factory, path[0], path[1]),
             amountIn
         );
         uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
@@ -942,7 +942,7 @@ contract SwapifyRouter is ISwapifyRouter {
         require(
             IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >=
                 amountOutMin,
-            "SwapifyRouter: INSUFFICIENT_OUTPUT_AMOUNT"
+            "NineInchRouter: INSUFFICIENT_OUTPUT_AMOUNT"
         );
     }
 
@@ -952,12 +952,12 @@ contract SwapifyRouter is ISwapifyRouter {
         address to,
         uint deadline
     ) external payable virtual override ensure(deadline) {
-        require(path[0] == WETH, "SwapifyRouter: INVALID_PATH");
+        require(path[0] == WETH, "NineInchRouter: INVALID_PATH");
         uint amountIn = msg.value;
         IWETH(WETH).deposit{value: amountIn}();
         assert(
             IWETH(WETH).transfer(
-                SwapifyV2Library.pairFor(factory, path[0], path[1]),
+                NineInchV2Library.pairFor(factory, path[0], path[1]),
                 amountIn
             )
         );
@@ -966,7 +966,7 @@ contract SwapifyRouter is ISwapifyRouter {
         require(
             IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >=
                 amountOutMin,
-            "SwapifyRouter: INSUFFICIENT_OUTPUT_AMOUNT"
+            "NineInchRouter: INSUFFICIENT_OUTPUT_AMOUNT"
         );
     }
 
@@ -977,18 +977,18 @@ contract SwapifyRouter is ISwapifyRouter {
         address to,
         uint deadline
     ) external virtual override ensure(deadline) {
-        require(path[path.length - 1] == WETH, "SwapifyRouter: INVALID_PATH");
+        require(path[path.length - 1] == WETH, "NineInchRouter: INVALID_PATH");
         TransferHelper.safeTransferFrom(
             path[0],
             msg.sender,
-            SwapifyV2Library.pairFor(factory, path[0], path[1]),
+            NineInchV2Library.pairFor(factory, path[0], path[1]),
             amountIn
         );
         _swapSupportingFeeOnTransferTokens(path, address(this));
         uint amountOut = IERC20(WETH).balanceOf(address(this));
         require(
             amountOut >= amountOutMin,
-            "SwapifyRouter: INSUFFICIENT_OUTPUT_AMOUNT"
+            "NineInchRouter: INSUFFICIENT_OUTPUT_AMOUNT"
         );
         IWETH(WETH).withdraw(amountOut);
         TransferHelper.safeTransferETH(to, amountOut);
@@ -1000,7 +1000,7 @@ contract SwapifyRouter is ISwapifyRouter {
         uint reserveA,
         uint reserveB
     ) public pure virtual override returns (uint amountB) {
-        return SwapifyV2Library.quote(amountA, reserveA, reserveB);
+        return NineInchV2Library.quote(amountA, reserveA, reserveB);
     }
 
     function getAmountOut(
@@ -1008,7 +1008,7 @@ contract SwapifyRouter is ISwapifyRouter {
         uint reserveIn,
         uint reserveOut
     ) public pure virtual override returns (uint amountOut) {
-        return SwapifyV2Library.getAmountOut(amountIn, reserveIn, reserveOut);
+        return NineInchV2Library.getAmountOut(amountIn, reserveIn, reserveOut);
     }
 
     function getAmountIn(
@@ -1016,21 +1016,21 @@ contract SwapifyRouter is ISwapifyRouter {
         uint reserveIn,
         uint reserveOut
     ) public pure virtual override returns (uint amountIn) {
-        return SwapifyV2Library.getAmountIn(amountOut, reserveIn, reserveOut);
+        return NineInchV2Library.getAmountIn(amountOut, reserveIn, reserveOut);
     }
 
     function getAmountsOut(
         uint amountIn,
         address[] memory path
     ) public view virtual override returns (uint[] memory amounts) {
-        return SwapifyV2Library.getAmountsOut(factory, amountIn, path);
+        return NineInchV2Library.getAmountsOut(factory, amountIn, path);
     }
 
     function getAmountsIn(
         uint amountOut,
         address[] memory path
     ) public view virtual override returns (uint[] memory amounts) {
-        return SwapifyV2Library.getAmountsIn(factory, amountOut, path);
+        return NineInchV2Library.getAmountsIn(factory, amountOut, path);
     }
 }
 
@@ -1050,7 +1050,7 @@ library SafeMath {
     }
 }
 
-library SwapifyV2Library {
+library NineInchV2Library {
     using SafeMath for uint;
 
     // returns sorted token addresses, used to handle return values from pairs sorted in this order
@@ -1058,11 +1058,11 @@ library SwapifyV2Library {
         address tokenA,
         address tokenB
     ) internal pure returns (address token0, address token1) {
-        require(tokenA != tokenB, "SwapifyV2Library: IDENTICAL_ADDRESSES");
+        require(tokenA != tokenB, "NineInchV2Library: IDENTICAL_ADDRESSES");
         (token0, token1) = tokenA < tokenB
             ? (tokenA, tokenB)
             : (tokenB, tokenA);
-        require(token0 != address(0), "SwapifyV2Library: ZERO_ADDRESS");
+        require(token0 != address(0), "NineInchV2Library: ZERO_ADDRESS");
     }
 
     // calculates the CREATE2 address for a pair without making any external calls
@@ -1093,7 +1093,7 @@ library SwapifyV2Library {
         address tokenB
     ) internal view returns (uint reserveA, uint reserveB) {
         (address token0, ) = sortTokens(tokenA, tokenB);
-        (uint reserve0, uint reserve1, ) = ISwapifyV2Pair(
+        (uint reserve0, uint reserve1, ) = INineInchV2Pair(
             pairFor(factory, tokenA, tokenB)
         ).getReserves();
         (reserveA, reserveB) = tokenA == token0
@@ -1107,10 +1107,10 @@ library SwapifyV2Library {
         uint reserveA,
         uint reserveB
     ) internal pure returns (uint amountB) {
-        require(amountA > 0, "SwapifyV2Library: INSUFFICIENT_AMOUNT");
+        require(amountA > 0, "NineInchV2Library: INSUFFICIENT_AMOUNT");
         require(
             reserveA > 0 && reserveB > 0,
-            "SwapifyV2Library: INSUFFICIENT_LIQUIDITY"
+            "NineInchV2Library: INSUFFICIENT_LIQUIDITY"
         );
         amountB = amountA.mul(reserveB) / reserveA;
     }
@@ -1121,10 +1121,10 @@ library SwapifyV2Library {
         uint reserveIn,
         uint reserveOut
     ) internal pure returns (uint amountOut) {
-        require(amountIn > 0, "SwapifyV2Library: INSUFFICIENT_INPUT_AMOUNT");
+        require(amountIn > 0, "NineInchV2Library: INSUFFICIENT_INPUT_AMOUNT");
         require(
             reserveIn > 0 && reserveOut > 0,
-            "SwapifyV2Library: INSUFFICIENT_LIQUIDITY"
+            "NineInchV2Library: INSUFFICIENT_LIQUIDITY"
         );
         uint amountInWithFee = amountIn.mul(997);
         uint numerator = amountInWithFee.mul(reserveOut);
@@ -1138,10 +1138,10 @@ library SwapifyV2Library {
         uint reserveIn,
         uint reserveOut
     ) internal pure returns (uint amountIn) {
-        require(amountOut > 0, "SwapifyV2Library: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amountOut > 0, "NineInchV2Library: INSUFFICIENT_OUTPUT_AMOUNT");
         require(
             reserveIn > 0 && reserveOut > 0,
-            "SwapifyV2Library: INSUFFICIENT_LIQUIDITY"
+            "NineInchV2Library: INSUFFICIENT_LIQUIDITY"
         );
         uint numerator = reserveIn.mul(amountOut).mul(1000);
         uint denominator = reserveOut.sub(amountOut).mul(997);
@@ -1154,7 +1154,7 @@ library SwapifyV2Library {
         uint amountIn,
         address[] memory path
     ) internal view returns (uint[] memory amounts) {
-        require(path.length >= 2, "SwapifyV2Library: INVALID_PATH");
+        require(path.length >= 2, "NineInchV2Library: INVALID_PATH");
         amounts = new uint[](path.length);
         amounts[0] = amountIn;
         for (uint i; i < path.length - 1; i++) {
@@ -1173,7 +1173,7 @@ library SwapifyV2Library {
         uint amountOut,
         address[] memory path
     ) internal view returns (uint[] memory amounts) {
-        require(path.length >= 2, "SwapifyV2Library: INVALID_PATH");
+        require(path.length >= 2, "NineInchV2Library: INVALID_PATH");
         amounts = new uint[](path.length);
         amounts[amounts.length - 1] = amountOut;
         for (uint i = path.length - 1; i > 0; i--) {
